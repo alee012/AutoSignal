@@ -87,7 +87,7 @@ def run_command_and_read_csv(command, csv_file):
 # --------------------------
 # Configuration
 # --------------------------
-file_path = "./no_interfere.csv"  # Adjust path as needed
+file_path = "file.lol"  # Adjust path as needed
 command = f"./rtl_power_fftw -f 442M:443M -b 512 -t 10 > {file_path}"
 st.set_page_config(page_title="📡 SpectraShield", layout="wide")
 
@@ -289,6 +289,12 @@ st.markdown("""
         padding: 10px;
         box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
     }
+            
+    /* Make only the checkbox input larger */
+    input[type="checkbox"] {
+        transform: scale(1.4);
+        margin-right: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -310,20 +316,41 @@ with st.sidebar:
     </div>
     ''', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">🛠️ Monitor</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Monitor</div>', unsafe_allow_html=True)
     
-    # Toggle for anomaly detection
-    enable_anomaly_detection = st.checkbox("🔍 Enable Anomaly Detection", value=True)
     
-    st.markdown('<div style="text-align: center;">', unsafe_allow_html=True)
-    if st.button("🔍 Start Scan"):
+    st.markdown('<div style="display: center;">', unsafe_allow_html=True)
+    if st.button("Start Scan"):
         if run_command_and_read_csv(command, file_path):
-            st.success("✅ Scan complete!")
+            st.success("Scan complete!")
         else:
             st.error("⚠️ Scan failed. Check your setup.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">📘 Info</div>', unsafe_allow_html=True)
+ 
+    
+        # Initialize only once
+        # Initialize once
+    st.markdown('<div class="section-title">Enable Anomaly Detection</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="text-align: center; margin-top: 1rem;">', unsafe_allow_html=True)
+
+    # Initialize once
+    if "enable_anomaly_detection" not in st.session_state:
+        st.session_state.enable_anomaly_detection = True  # Default to ON
+
+    # Toggle the value FIRST if the button was clicked
+    if st.button(
+        "Anomaly Detection: ON" if st.session_state.enable_anomaly_detection else "🚫 Anomaly Detection: OFF"
+    ):
+        st.session_state.enable_anomaly_detection = not st.session_state.enable_anomaly_detection
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    enable_anomaly_detection = st.session_state.enable_anomaly_detection
+
+
+    st.markdown('<div class="section-title">Info</div>', unsafe_allow_html=True)
     st.markdown("""
     <div style="color:rgb(124, 124, 161); font-size: 0.95rem;">
         <strong>SpectraShield</strong> lets you visualize RF power scans in real-time.
