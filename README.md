@@ -1,2 +1,2 @@
 # AutoSignal-
-GrizzHacks 7 project.
+GrizzHacks 7 project: SpectraShield
