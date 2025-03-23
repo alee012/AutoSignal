@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from google import genai
-import google.generativeai as genai  # ✅ correct
+
 
 
 
@@ -91,7 +91,7 @@ def run_command_and_read_csv(command, csv_file):
 # --------------------------
 # Configuration
 # --------------------------
-file_path = "/Users/vivekrevankar/Downloads/interferance.csv"  # Adjust path as needed
+file_path = "/Users/aidenlee/Coding/PythonFiles/testing/interfere.csv"  # Adjust path as needed
 command = f"./rtl_power_fftw -f 442M:443M -b 512 -t 10 > {file_path}"
 st.set_page_config(page_title="📡 SpectraShield", layout="wide")
 
@@ -275,6 +275,49 @@ st.markdown("""
             background-color: #f8d7da;
             color: #721c24;
         }
+        
+        /* Chat message styling */
+        .chat-message {
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        
+        .user-message {
+            text-align: right;
+            color: #001f3f;
+        }
+        
+        .bot-message {
+            text-align: left;
+            color: #444;
+        }
+        
+        .message-content {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        .user-content {
+            background-color: #e1f0ff;
+            border: 1px solid #cce5ff;
+            text-align: left;
+        }
+        
+        .bot-content {
+            background-color: #f1f1f1;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
 
     </style>
 
@@ -354,19 +397,7 @@ with st.sidebar:
     enable_anomaly_detection = st.session_state.enable_anomaly_detection
 
 
-    st.markdown('<div class="section-title">Info</div>', unsafe_allow_html=True)
-    st.markdown("""
-    <div style="color:rgb(124, 124, 161); font-size: 0.95rem;">
-        <strong>SpectraShield</strong> lets you visualize RF power scans in real-time.
-        <br><br>
-        <strong>Details:</strong>
-        <ul>
-            <li>Frequency: <strong>442–443 MHz</strong></li>
-            <li>Power: <strong>dB/Hz</strong></li>
-            <li>Captured using: <code>rtl_power_fftw</code></li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
+    
 
 
 # --------------------------
@@ -471,152 +502,141 @@ if os.path.exists(file_path):
             )
         )
 
-        chart_col, card_col = st.columns([4, 2])
-
         # Global input (must be top level)
-        user_prompt = st.chat_input("Ask about TechCorp or the data...")
+        user_prompt = st.chat_input("Ask about SpectraShield or the data...")
+        st.plotly_chart(fig, use_container_width=True)
 
-        with chart_col:
-            st.plotly_chart(fig, use_container_width=True)
-
-        with card_col:
+        with st.sidebar:
             # 🧠 Setup Gemini
             import google.generativeai as genai
-            API_KEY = ""
+            API_KEY = "AIzaSyBzeo8kubuHiMASlmKXi0VBn0Xi38WpN2Y"
             genai.configure(api_key=API_KEY)
             model = genai.GenerativeModel("gemini-1.5-pro")
+
+            test = pd.read_csv(file_path).to_string(index=False)
 
             # 📄 Context info
             csv_data = df.to_string(index=False)
             custom_data = f"""
-            Here is some information about a fictional company, TechCorp:
-            - TechCorp was founded in 2010.
-            - The company specializes in AI and machine learning technologies.
-            - Their flagship product is an AI-powered chatbot called "Gemini Assistant."
-            - TechCorp has offices in San Francisco, New York, and London.
-            - The CEO of TechCorp is John Doe.
+            This program uses an SDR to scan a frequency range to check for anomolies. 
+            Your job is to read the CSV file and describe what anomilies are there
+            I would highly reccommend using the ARRL Amateur Radio Frequency Guide to explain what 
+            devices may be operating in that frequency range.
 
-            Here is additional data from a CSV file:
-            {csv_data}
+            the range is from 442 - 443 MHz
+
+            Here is some information from a csv file:
+            {test}
             """
 
-            # 💬 Chat container styled like a card
-            with st.container():
-                st.markdown('''
-                    <div class="data-card" style="height: 500px; overflow-y: auto; display: flex; flex-direction: column;">
-                        <div style="font-size: 1.2rem; font-weight: 700; color: #001f3f; margin-bottom: 1rem;">
-                            💬 Gemini Assistant
+            # Init session history
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+
+            # Append and fetch response
+            if user_prompt:
+                st.session_state.chat_history.append({"role": "user", "content": user_prompt})
+                full_prompt = f"{custom_data}\n\nBased on the information above, answer the following:\n{user_prompt}"
+                try:
+                    response = model.generate_content(full_prompt)
+                    st.session_state.chat_history.append({"role": "model", "content": response.text})
+                except Exception as e:
+                    st.session_state.chat_history.append({"role": "model", "content": f"❌ Error: {e}"})
+
+            # Display chat history inside the container with better styling
+            for msg in st.session_state.chat_history:
+                if msg["role"] == "user":
+                    st.markdown(f'''
+                        <div class="chat-message user-message">
+                            <div class="message-content user-content">
+                                <strong>👤 You:</strong><br>{msg["content"]}
+                            </div>
                         </div>
-                ''', unsafe_allow_html=True)
+                    ''', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'''
+                        <div class="chat-message bot-message">
+                            <div class="message-content bot-content">
+                                <strong>🧠 Gemini:</strong><br>{msg["content"]}
+                    ''', unsafe_allow_html=True)
 
-                # Init session history
-                if "chat_history" not in st.session_state:
-                    st.session_state.chat_history = []
-
-                # Append and fetch response
-                if user_prompt:
-                    st.session_state.chat_history.append({"role": "user", "content": user_prompt})
-                    full_prompt = f"{custom_data}\n\nBased on the information above, answer the following:\n{user_prompt}"
-                    try:
-                        response = model.generate_content(full_prompt)
-                        st.session_state.chat_history.append({"role": "model", "content": response.text})
-                    except Exception as e:
-                        st.session_state.chat_history.append({"role": "model", "content": f"❌ Error: {e}"})
-
-                # Display chat history inside card
-                for msg in st.session_state.chat_history:
-                    sender = "🧠 Gemini" if msg["role"] == "model" else "👤 You"
-                    st.markdown(f"<p><strong>{sender}:</strong><br>{msg['content']}</p>", unsafe_allow_html=True)
-
-                st.markdown('</div>', unsafe_allow_html=True)
-
+            # Close the chat container and card
+     
             
-        
+
         # Anomaly Analysis Section
-        if enable_anomaly_detection:
-            st.markdown('<div class="anomaly-section">', unsafe_allow_html=True)
+        # --------------------------
+
+    if enable_anomaly_detection:
+        st.markdown('<div class="anomaly-section">', unsafe_allow_html=True)
+        
+        if not anomalies.empty:
+            # Display metrics
+            st.markdown("<br><strong>Anomaly Metrics</strong>", unsafe_allow_html=True)
             
-            if not anomalies.empty:
-                st.markdown('<div class="anomaly-header">🚨 Anomaly Analysis</div>', unsafe_allow_html=True)
-                
-                # Display detection method information
-                st.markdown("<strong>Detection Settings</strong>", unsafe_allow_html=True)
-                st.markdown(f"""
-                <div class="info-text">
-                    Power Range: <strong>{power_range:.2f} dB</strong> ({power_min:.2f} to {power_max:.2f} dB/Hz)<br>
-                    Method: <strong>{'Both methods must agree (AND)' if power_range < 8 else 'Either method can flag (OR)'}</strong><br>
-                    Contamination Rate: <strong>{df.attrs.get('used_contamination', 'N/A')}</strong><br>
-                    Standard Deviation Threshold: <strong>{df.attrs.get('used_std_threshold', 'N/A')}σ</strong>
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{len(anomalies)}</div>
+                    <div class="metric-label">Total Anomalies</div>
                 </div>
-                """, unsafe_allow_html=True)
-                
-                # Display metrics
-                st.markdown("<br><strong>Anomaly Metrics</strong>", unsafe_allow_html=True)
-                
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    st.markdown(f'''
-                    <div class="metric-card">
-                        <div class="metric-value">{len(anomalies)}</div>
-                        <div class="metric-label">Total Anomalies</div>
-                    </div>
-                    ''', unsafe_allow_html=True)
-                
-                with col2:
-                    st.markdown(f'''
-                    <div class="metric-card">
-                        <div class="metric-value">{df.attrs.get('if_anomaly_count', 0)}</div>
-                        <div class="metric-label">Isolation Forest</div>
-                    </div>
-                    ''', unsafe_allow_html=True)
-                
-                with col3:
-                    st.markdown(f'''
-                    <div class="metric-card">
-                        <div class="metric-value">{df.attrs.get('std_anomaly_count', 0)}</div>
-                        <div class="metric-label">Std Deviation</div>
-                    </div>
-                    ''', unsafe_allow_html=True)
-                
-                with col4:
-                    anomaly_density = len(anomalies) / power_range if power_range > 0 else 0
-                    st.markdown(f'''
-                    <div class="metric-card">
-                        <div class="metric-value">{anomaly_density:.2f}</div>
-                        <div class="metric-label">Anomalies per dB</div>
-                    </div>
-                    ''', unsafe_allow_html=True)
-                
-                # Create a Plotly histogram for anomaly distribution
-                if len(anomalies) > 1:  # Only show histogram if we have multiple anomalies
-                    anomaly_hist = go.Figure()
-                    anomaly_hist.add_trace(go.Histogram(
-                        x=anomalies["Power_dB/Hz"],
-                        nbinsx=10,
-                        marker_color='red',
-                        opacity=0.7
-                    ))
-                    anomaly_hist.update_layout(
-                        title="Anomaly Power Distribution",
-                        xaxis_title="Power (dB/Hz)",
-                        yaxis_title="Count",
-                        template="plotly_white",
-                        height=300,
-                        margin=dict(l=40, r=40, t=60, b=40),
-                    )
-                    st.plotly_chart(anomaly_hist, use_container_width=True)
-                
-                # Display anomaly data table
-                st.markdown("<br><strong>Anomaly Details</strong>", unsafe_allow_html=True)
-                st.dataframe(anomalies[["Frequency_Hz", "Power_dB/Hz"]], use_container_width=True)
+                ''', unsafe_allow_html=True)
             
-            else:
-                st.markdown('<div class="anomaly-header">✅ Anomaly Analysis</div>', unsafe_allow_html=True)
-                st.info("No anomalies detected in the current scan.")
+            with col2:
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{df.attrs.get('if_anomaly_count', 0)}</div>
+                    <div class="metric-label">Isolation Forest</div>
+                </div>
+                ''', unsafe_allow_html=True)
             
-            st.markdown('</div>', unsafe_allow_html=True)  # Close anomaly section
+            with col3:
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{df.attrs.get('std_anomaly_count', 0)}</div>
+                    <div class="metric-label">Std Deviation</div>
+                </div>
+                ''', unsafe_allow_html=True)
             
+            with col4:
+                anomaly_density = len(anomalies) / power_range if power_range > 0 else 0
+                st.markdown(f'''
+                <div class="metric-card">
+                    <div class="metric-value">{anomaly_density:.2f}</div>
+                    <div class="metric-label">Anomalies per dB</div>
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            # Create a Plotly histogram for anomaly distribution
+            if len(anomalies) > 1:  # Only show histogram if we have multiple anomalies
+                anomaly_hist = go.Figure()
+                anomaly_hist.add_trace(go.Histogram(
+                    x=anomalies["Power_dB/Hz"],
+                    nbinsx=10,
+                    marker_color='red',
+                    opacity=0.7
+                ))
+                anomaly_hist.update_layout(
+                    title="Anomaly Power Distribution",
+                    xaxis_title="Power (dB/Hz)",
+                    yaxis_title="Count",
+                    template="plotly_white",
+                    height=300,
+                    margin=dict(l=40, r=40, t=60, b=40),
+                )
+                st.plotly_chart(anomaly_hist, use_container_width=True)
+            
+            # Display anomaly data table
+            st.markdown("<br><strong>Anomaly Details</strong>", unsafe_allow_html=True)
+            st.dataframe(anomalies[["Frequency_Hz", "Power_dB/Hz"]], use_container_width=True)
+        
+        else:
+            st.markdown('<div class="anomaly-header">✅ Anomaly Analysis</div>', unsafe_allow_html=True)
+            st.info("No anomalies detected in the current scan.")
+        
+        st.markdown('</div>', unsafe_allow_html=True)  # Close anomaly section
     else:
         st.warning("⚠️ No data found in CSV.")
 else:
