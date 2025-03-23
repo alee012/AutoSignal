@@ -508,8 +508,11 @@ if os.path.exists(file_path):
 
         with st.sidebar:
             # 🧠 Setup Gemini
+
+            st.markdown('<div class="section-title">Chat with Spectra</div>', unsafe_allow_html=True)
+
             import google.generativeai as genai
-            API_KEY = "AIzaSyBzeo8kubuHiMASlmKXi0VBn0Xi38WpN2Y"
+            API_KEY = "***REPLACE***"
             genai.configure(api_key=API_KEY)
             model = genai.GenerativeModel("gemini-1.5-pro")
 
