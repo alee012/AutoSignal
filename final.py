@@ -5,6 +5,10 @@ import subprocess
 import plotly.graph_objects as go
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
+from google import genai
+import google.generativeai as genai  # ✅ correct
+
+
 
 
 # --------------------------
@@ -87,7 +91,7 @@ def run_command_and_read_csv(command, csv_file):
 # --------------------------
 # Configuration
 # --------------------------
-file_path = "file.lol"  # Adjust path as needed
+file_path = "/Users/vivekrevankar/Downloads/interferance.csv"  # Adjust path as needed
 command = f"./rtl_power_fftw -f 442M:443M -b 512 -t 10 > {file_path}"
 st.set_page_config(page_title="📡 SpectraShield", layout="wide")
 
@@ -467,8 +471,66 @@ if os.path.exists(file_path):
             )
         )
 
-        # Display plot
-        st.plotly_chart(fig, use_container_width=True)
+        chart_col, card_col = st.columns([4, 2])
+
+        # Global input (must be top level)
+        user_prompt = st.chat_input("Ask about TechCorp or the data...")
+
+        with chart_col:
+            st.plotly_chart(fig, use_container_width=True)
+
+        with card_col:
+            # 🧠 Setup Gemini
+            import google.generativeai as genai
+            API_KEY = ""
+            genai.configure(api_key=API_KEY)
+            model = genai.GenerativeModel("gemini-1.5-pro")
+
+            # 📄 Context info
+            csv_data = df.to_string(index=False)
+            custom_data = f"""
+            Here is some information about a fictional company, TechCorp:
+            - TechCorp was founded in 2010.
+            - The company specializes in AI and machine learning technologies.
+            - Their flagship product is an AI-powered chatbot called "Gemini Assistant."
+            - TechCorp has offices in San Francisco, New York, and London.
+            - The CEO of TechCorp is John Doe.
+
+            Here is additional data from a CSV file:
+            {csv_data}
+            """
+
+            # 💬 Chat container styled like a card
+            with st.container():
+                st.markdown('''
+                    <div class="data-card" style="height: 500px; overflow-y: auto; display: flex; flex-direction: column;">
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #001f3f; margin-bottom: 1rem;">
+                            💬 Gemini Assistant
+                        </div>
+                ''', unsafe_allow_html=True)
+
+                # Init session history
+                if "chat_history" not in st.session_state:
+                    st.session_state.chat_history = []
+
+                # Append and fetch response
+                if user_prompt:
+                    st.session_state.chat_history.append({"role": "user", "content": user_prompt})
+                    full_prompt = f"{custom_data}\n\nBased on the information above, answer the following:\n{user_prompt}"
+                    try:
+                        response = model.generate_content(full_prompt)
+                        st.session_state.chat_history.append({"role": "model", "content": response.text})
+                    except Exception as e:
+                        st.session_state.chat_history.append({"role": "model", "content": f"❌ Error: {e}"})
+
+                # Display chat history inside card
+                for msg in st.session_state.chat_history:
+                    sender = "🧠 Gemini" if msg["role"] == "model" else "👤 You"
+                    st.markdown(f"<p><strong>{sender}:</strong><br>{msg['content']}</p>", unsafe_allow_html=True)
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            
         
         # Anomaly Analysis Section
         if enable_anomaly_detection:
