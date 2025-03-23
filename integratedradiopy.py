@@ -32,8 +32,11 @@ st.set_page_config(page_title="📡 SpectraShield", layout="wide")
 # Custom CSS (Updated Colors)
 # --------------------------
 st.markdown("""
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+        
 
         html, body, [class*="css"] {
             font-family: 'Lexend', sans-serif !important;
@@ -42,7 +45,7 @@ st.markdown("""
         }
 
         .main-title {
-            font-size: 2.8rem;
+            font-size: 2.5rem;
             font-weight: 800;
             color: black; /* Blue title */
             letter-spacing: -1px;
@@ -56,11 +59,11 @@ st.markdown("""
         }
 
         .stButton > button {
-            background: rgb(226, 154, 69);
+            background: #001f3f;
             color: white;
             font-weight: 600;
             padding: 0.5rem 4rem;
-            border: none;
+            border-color: rgb(226, 154, 69);
             border-radius: 10px;
             transition: all 0.2s ease-in-out;
             margin-left: 20px
@@ -69,15 +72,14 @@ st.markdown("""
 
         .section-title {
             font-size: 1.4rem;
-            font-weight: bold;
-            margin-top: 2rem;
             color: rgb(217, 142, 58) /* Blue section titles */
+
         }
 
         .logo {
             font-size: 2.3rem;
             font-weight: bold;
-            margin-top: 2rem;
+            margin-top: -0.5rem;
             color: rgb(217, 142, 58) /* Blue section titles */
         }
 
@@ -110,7 +112,36 @@ st.markdown("""
             background-color: #001f3f; /* Navy blue sidebar */
             color: #ffffff; /* White text for better contrast */
         }
+
+
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+
+        .material-symbols-outlined.orange-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            color: rgb(217, 142, 58); /* Your existing orange */
+            font-size: 2.5rem;
+            margin-right: 8px;
+        }
+        .logo-title {
+            font-size: 2.3rem;
+            color: rgb(217, 142, 58);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            margin-top: -15px
+        }
+
     </style>
+
+    
 """, unsafe_allow_html=True)
 
 st.markdown("""
@@ -138,7 +169,14 @@ st.markdown("---")
 # Sidebar
 # --------------------------
 with st.sidebar:
-    st.markdown('<div class="logo">SpectraShield</div>', unsafe_allow_html=True)
+
+    st.markdown('''
+    <div class="logo-title">
+        <span class="material-symbols-outlined orange-icon">settings_input_antenna</span>
+        SpectraShield
+    </div>
+    ''', unsafe_allow_html=True)
+
 
     st.markdown('<div class="section-title">🛠️ Monitor</div>', unsafe_allow_html=True)
 
