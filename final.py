@@ -580,7 +580,7 @@ if os.path.exists(file_path):
                 st.markdown(f'''
                 <div class="metric-card">
                     <div class="metric-value">{len(anomalies)}</div>
-                    <div class="metric-label">Total Anomalies</div>
+                    <div class="metric-label">Critical Anomalies</div>
                 </div>
                 ''', unsafe_allow_html=True)
             
